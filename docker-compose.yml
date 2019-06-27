@@ -1,0 +1,54 @@
+version: '3.2'
+
+services:
+  metabase:
+    image: metabase/metabase
+    depends_on:
+      - metadata
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: metabase
+      MB_DB_PORT: 5432
+      MB_DB_USER: metabase
+      MB_DB_PASS: metabase
+      MB_DB_HOST: metadata
+    expose:
+      - "3000"
+    links:
+      - metadata
+    networks:
+      - app-network
+  metadata:
+    image: postgres:9.6.11
+    environment:
+      POSTGRES_PASSWORD: metabase
+      POSTGRES_USER: metabase
+      POSTGRES_DB: metabase
+    networks:
+      - app-network      
+  appdata:
+    image: postgres:9.6.11
+    environment:
+      POSTGRES_PASSWORD: metabase
+      POSTGRES_USER: metabase
+      POSTGRES_DB: metabase
+    ports:
+      - "25432:5432"
+    volumes:
+      - "./data/:/host"
+    networks:
+      - app-network
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile-nginx
+    ports:
+      - "28080:8080"
+    links:
+      - metabase
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge      
